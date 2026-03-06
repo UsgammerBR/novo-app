@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer, PropsWithChildren } from 'react';
+import React, { useState, useEffect, useReducer, PropsWithChildren, Component } from 'react';
 import { SideMenu } from './components/SideMenu';
 import { 
     IconApp, IconPlus, IconMinus, IconTrash, IconUndo, IconSearch
@@ -43,6 +43,7 @@ type Action =
   | { type: 'ADD_ITEM'; payload: { date: string; category: EquipmentCategory } }
   | { type: 'UPDATE_ITEM'; payload: { date: string; category: EquipmentCategory; item: EquipmentItem } }
   | { type: 'DELETE_ITEMS'; payload: { date: string; category: EquipmentCategory; itemIds: string[] } }
+  | { type: 'BATCH_DELETE'; payload: { date: string; selections: Record<string, string[]> } }
   | { type: 'CLEAR_ALL_DATA' };
 
 const dataReducer = (state: AppData, action: Action): AppData => {
@@ -84,6 +85,21 @@ const dataReducer = (state: AppData, action: Action): AppData => {
             }
             return newState;
         }
+        case 'BATCH_DELETE': {
+            const { date, selections } = action.payload;
+            const newState = JSON.parse(JSON.stringify(state));
+            if (!newState[date]) return state;
+
+            Object.entries(selections).forEach(([category, itemIds]) => {
+                const dayData = newState[date][category as EquipmentCategory];
+                if (!dayData) return;
+                newState[date][category as EquipmentCategory] = dayData.filter((item: EquipmentItem) => !itemIds.includes(item.id));
+                if (newState[date][category as EquipmentCategory].length === 0) {
+                    newState[date][category as EquipmentCategory].push({ id: generateId(), qt: '', contract: '', serial: '', photos: [] });
+                }
+            });
+            return newState;
+        }
         case 'CLEAR_ALL_DATA': return {};
         default: return state;
     }
@@ -94,7 +110,7 @@ const dataReducer = (state: AppData, action: Action): AppData => {
 interface ErrorBoundaryProps { children?: React.ReactNode; }
 interface ErrorBoundaryState { hasError: boolean; error: Error | null; }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState;
 
   constructor(props: ErrorBoundaryProps) {
@@ -108,7 +124,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     if (this.state.hasError) {
       return <div className="p-8 text-center text-red-600"><h1>Erro inesperado</h1><button onClick={() => window.location.reload()}>Recarregar</button></div>;
     }
-    return this.props.children;
+    return (this as any).props.children;
   }
 }
 
@@ -149,7 +165,14 @@ const AppContent = () => {
 
   useEffect(() => {
     const savedData = localStorage.getItem('equipmentData');
-    if (savedData) dispatch({ type: 'SET_DATA', payload: JSON.parse(savedData) });
+    if (savedData) {
+        try {
+            dispatch({ type: 'SET_DATA', payload: JSON.parse(savedData) });
+        } catch (e) {
+            console.error("Failed to parse saved data", e);
+            localStorage.removeItem('equipmentData');
+        }
+    }
   }, []);
 
   useEffect(() => {
@@ -195,8 +218,9 @@ const AppContent = () => {
         setConfirmation({
             message: `Apagar ${totalSelected} item(s)?`,
             onConfirm: () => {
-                Object.entries(selectedItems).forEach(([cat, ids]: [string, string[]]) => {
-                    if (ids.length > 0) dispatchWithHistory({ type: 'DELETE_ITEMS', payload: { date: formattedDate, category: cat as EquipmentCategory, itemIds: ids } });
+                dispatchWithHistory({ 
+                    type: 'BATCH_DELETE', 
+                    payload: { date: formattedDate, selections: selectedItems } 
                 });
                 handleToggleDeleteMode(); 
             }

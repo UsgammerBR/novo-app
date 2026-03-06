@@ -183,7 +183,7 @@ const InputWithLabel: React.FC<InputWithLabelProps> = ({ value, onChange, placeh
             onChange={onChange}
             onFocus={onFocus}
             placeholder={placeholder}
-            className="w-full h-full bg-transparent text-center text-xs font-bold text-transparent bg-clip-text bg-gradient-to-b from-blue-600 to-cyan-400 placeholder:text-slate-400 outline-none px-2"
+            className="w-full h-full bg-transparent text-center text-xs font-bold text-blue-600 placeholder:text-slate-400 outline-none px-2"
         />
         {showClipboard && value && (
             <button 
