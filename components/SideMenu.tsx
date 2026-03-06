@@ -1,53 +1,98 @@
 import React from 'react';
-import { IconX, IconSave, IconShare, IconFileWord, IconApp } from './icons';
+import { motion, AnimatePresence } from 'motion/react';
+import { UserProfile } from '../types';
+import { 
+    IconX, IconCalendar, IconExport, IconCloud, IconSearch, IconBell, IconCamera
+} from './icons';
 
 interface SideMenuProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onMenuClick: (menu: string) => void;
+    isOpen: boolean;
+    onClose: () => void;
+    onMenuClick: (modal: string) => void;
+    userProfile: UserProfile;
+    isChristmas?: boolean;
 }
 
-export const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onMenuClick }) => {
-  return (
-    <>
-      <div className={`fixed top-0 left-0 w-72 h-full bg-white/60 backdrop-blur-3xl z-[51] shadow-2xl transform transition-transform duration-300 ease-out border-r border-white/40 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-6 flex flex-col h-full">
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center gap-3">
-                <IconApp className="w-12 h-12 drop-shadow-lg" />
-                <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-b from-blue-600/80 to-cyan-400/80 tracking-tight drop-shadow-sm">MENU</h2>
-            </div>
-            <button onClick={onClose} className="p-2 hover:bg-blue-50 rounded-full text-blue-400 hover:text-blue-600 transition-colors">
-              <IconX className="w-6 h-6" />
-            </button>
-          </div>
+export const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onMenuClick, userProfile, isChristmas }) => {
+    const menuItems = [
+        { id: 'calendar', label: 'Calendário', icon: IconCalendar, color: 'text-blue-500' },
+        { id: 'search', label: 'Pesquisar', icon: IconSearch, color: 'text-purple-500' },
+        { id: 'export', label: 'Exportar / Backup', icon: IconExport, color: 'text-emerald-500' },
+        { id: 'notifications', label: 'Atividades', icon: IconBell, color: 'text-orange-500' },
+        { id: 'settings', label: 'Configurações', icon: IconCamera, color: 'text-slate-500' },
+    ];
 
-          <nav className="flex-1 space-y-3">
-            <MenuButton icon={<IconFileWord />} label="Calendário" onClick={() => onMenuClick('calendar')} />
-            <MenuButton icon={<IconSave />} label="Salvar Manualmente" onClick={() => onMenuClick('save')} />
-            <MenuButton icon={<IconShare />} label="Exportar" onClick={() => onMenuClick('export')} />
-            
-            <div className="h-px bg-gradient-to-r from-transparent via-blue-200/50 to-transparent my-6"></div>
-            
-            <MenuButton icon={<IconApp />} label="Sobre" onClick={() => onMenuClick('about')} />
-          </nav>
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <>
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[70]"
+                    />
+                    <motion.div 
+                        initial={{ x: "-100%" }}
+                        animate={{ x: 0 }}
+                        exit={{ x: "-100%" }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                        className="fixed top-0 left-0 bottom-0 w-[280px] bg-white z-[80] shadow-2xl flex flex-col"
+                    >
+                        <div className="p-8 pt-16 bg-slate-50 border-b border-slate-100 relative overflow-hidden">
+                            {isChristmas && (
+                                <div className="absolute top-0 right-0 p-4 opacity-20 rotate-12">
+                                    <span className="text-6xl">🎄</span>
+                                </div>
+                            )}
+                            <div className="flex items-center gap-4 relative z-10">
+                                <div className="w-16 h-16 rounded-2xl bg-white shadow-lg border border-slate-200 overflow-hidden">
+                                    {userProfile.profileImage ? (
+                                        <img src={userProfile.profileImage} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-600 font-black text-xl">
+                                            {userProfile.name.charAt(0)}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-black text-slate-900 uppercase tracking-tighter">{userProfile.name}</span>
+                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{userProfile.email || 'Usuário Pro'}</span>
+                                </div>
+                            </div>
+                            <button onClick={onClose} className="absolute top-6 right-6 w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 active:scale-90 transition-all">
+                                <IconX className="w-3 h-3" />
+                            </button>
+                        </div>
 
-          <div className="pt-6 border-t border-blue-100/50">
-            <button onClick={() => onMenuClick('settings')} className="flex items-center gap-3 w-full p-3 text-red-400 hover:bg-red-50 hover:text-red-500 rounded-xl font-bold transition-colors">
-                <span className="text-sm">Configurações</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+                        <div className="flex-1 p-6 space-y-2">
+                            {menuItems.map(item => (
+                                <button 
+                                    key={item.id}
+                                    onClick={() => { onMenuClick(item.id); onClose(); }}
+                                    className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-50 active:scale-[0.98] transition-all group"
+                                >
+                                    <div className={`w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-white group-hover:shadow-md transition-all ${item.color}`}>
+                                        <item.icon className="w-5 h-5" />
+                                    </div>
+                                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-[2px]">{item.label}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="p-8 border-t border-slate-100">
+                            <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 flex items-center gap-3">
+                                <IconCloud className="w-5 h-5 text-blue-600" />
+                                <div className="flex flex-col">
+                                    <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest">Sincronização</span>
+                                    <span className="text-[7px] font-black text-blue-400 uppercase tracking-widest">Ativada via Nuvem</span>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
+    );
 };
-
-const MenuButton = ({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick: () => void }) => (
-  <button onClick={onClick} className="flex items-center gap-4 w-full p-4 text-blue-800/70 hover:bg-blue-50/50 hover:text-blue-600 hover:shadow-sm rounded-xl transition-all active:scale-95 group border border-transparent hover:border-blue-100/50">
-    <div className="text-blue-400/80 group-hover:text-blue-600 group-hover:scale-110 transition-transform [&>svg]:w-6 [&>svg]:h-6 drop-shadow-sm">
-        {icon}
-    </div>
-    <span className="font-bold text-sm tracking-wide drop-shadow-sm text-transparent bg-clip-text bg-gradient-to-b from-blue-600 to-cyan-400">{label}</span>
-  </button>
-);

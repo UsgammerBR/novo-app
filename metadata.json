@@ -1,7 +1,5 @@
 {
-  "name": "EquipTrack Pro",
-  "description": "Professional equipment tracking application with daily logging, QR scanning, and photo documentation.",
-  "requestFramePermissions": [
-    "camera"
-  ]
+  "name": "Controle Box Pro",
+  "description": "Sistema avançado de controle de equipamentos com backup em nuvem, leitura de QR Code e relatórios PDF.",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"]
 }
